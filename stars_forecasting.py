@@ -22,6 +22,9 @@ df = pd.DataFrame(data)
 # Convert 'Star Year' to datetime format
 df['Star Year'] = pd.to_datetime(df['Star Year'], format='%Y')
 
+# Sort the DataFrame by 'Star Year' in ascending order
+df = df.sort_values(by='Star Year')
+
 # Streamlit UI
 st.title('Health Care Data Forecasting')
 
