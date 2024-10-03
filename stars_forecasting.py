@@ -42,28 +42,31 @@ pipeline = ChronosPipeline.from_pretrained(
     torch_dtype=torch.bfloat16,
 )
 
-# Prepare the data for forecasting
+# Prepare the data for forecasting (using all available historical data)
 context = torch.tensor(df[column_to_forecast].values, dtype=torch.float32).unsqueeze(0)
-prediction_length = 12
+prediction_length = 3  # Set to 3 for the next 3 years
 forecast = pipeline.predict(context, prediction_length)  # shape [num_series, num_samples, prediction_length]
 
-# Visualize the forecast
-forecast_index = range(len(df), len(df) + prediction_length)
+# Get the next three years
+last_year = df['Star Year'].dt.year.max()
+forecast_years = pd.date_range(start=f'{last_year + 1}', periods=3, freq='Y').year
+
+# Calculate the quantiles for low, median, and high predictions
 low, median, high = np.quantile(forecast.squeeze(0).numpy(), [0.1, 0.5, 0.9], axis=0)
 
 fig = go.Figure()
 
 # Add historical data trace
 fig.add_trace(go.Scatter(
-    x=df['Star Year'],
+    x=df['Star Year'].dt.year,
     y=df[column_to_forecast],
     mode='lines',
     name='Historical Data'
 ))
 
-# Add median forecast trace
+# Add median forecast trace for the next 3 years
 fig.add_trace(go.Scatter(
-    x=pd.date_range(df['Star Year'].iloc[-1], periods=prediction_length+1, freq='M')[1:], 
+    x=forecast_years,
     y=median,
     mode='lines',
     name='Median Forecast',
@@ -72,7 +75,7 @@ fig.add_trace(go.Scatter(
 
 # Add confidence interval
 fig.add_trace(go.Scatter(
-    x=pd.date_range(df['Star Year'].iloc[-1], periods=prediction_length+1, freq='M')[1:], 
+    x=forecast_years,
     y=low,
     fill=None,
     mode='lines',
@@ -81,7 +84,7 @@ fig.add_trace(go.Scatter(
 ))
 
 fig.add_trace(go.Scatter(
-    x=pd.date_range(df['Star Year'].iloc[-1], periods=prediction_length+1, freq='M')[1:], 
+    x=forecast_years,
     y=high,
     fill='tonexty',
     mode='lines',
@@ -91,8 +94,8 @@ fig.add_trace(go.Scatter(
 
 # Update layout
 fig.update_layout(
-    title=f'Forecast for {column_to_forecast}',
-    xaxis_title='Date',
+    title=f'Forecast for {column_to_forecast} (Next 3 Years)',
+    xaxis_title='Year',
     yaxis_title=column_to_forecast,
     template='plotly_white'
 )
