@@ -5,8 +5,22 @@ import torch
 from chronos import ChronosPipeline
 import plotly.graph_objects as go
 
-# Load dataset
-df = pd.read_csv('health_care_data_2023_2024.csv')
+# Create the data dictionary from the previous image data
+data = {
+    "Star Year": [2025, 2024, 2023, 2022, 2021, 2020],
+    "2 Stars": [53, 48, 43, 42, 50, 50],
+    "3 Stars": [67, 63, 62, 61, 66, 66],
+    "4 Stars": [75, 71, 70, 69, 76, 76],
+    "5 Stars": [82, 79, 77, 76, 83, 83],
+    "Avg Star": [73, 72, 70, 71, 75, 75],
+    "Avg Score": [3.4, 3.7, 3.7, 3.9, 3.5, 3.5]
+}
+
+# Convert the dictionary into a pandas DataFrame
+df = pd.DataFrame(data)
+
+# Convert 'Star Year' to datetime format
+df['Star Year'] = pd.to_datetime(df['Star Year'], format='%Y')
 
 # Streamlit UI
 st.title('Health Care Data Forecasting')
@@ -38,7 +52,7 @@ fig = go.Figure()
 
 # Add historical data trace
 fig.add_trace(go.Scatter(
-    x=df['Date'],
+    x=df['Star Year'],
     y=df[column_to_forecast],
     mode='lines',
     name='Historical Data'
@@ -46,7 +60,7 @@ fig.add_trace(go.Scatter(
 
 # Add median forecast trace
 fig.add_trace(go.Scatter(
-    x=pd.date_range(df['Date'].iloc[-1], periods=prediction_length+1, freq='M')[1:], 
+    x=pd.date_range(df['Star Year'].iloc[-1], periods=prediction_length+1, freq='M')[1:], 
     y=median,
     mode='lines',
     name='Median Forecast',
@@ -55,7 +69,7 @@ fig.add_trace(go.Scatter(
 
 # Add confidence interval
 fig.add_trace(go.Scatter(
-    x=pd.date_range(df['Date'].iloc[-1], periods=prediction_length+1, freq='M')[1:], 
+    x=pd.date_range(df['Star Year'].iloc[-1], periods=prediction_length+1, freq='M')[1:], 
     y=low,
     fill=None,
     mode='lines',
@@ -64,7 +78,7 @@ fig.add_trace(go.Scatter(
 ))
 
 fig.add_trace(go.Scatter(
-    x=pd.date_range(df['Date'].iloc[-1], periods=prediction_length+1, freq='M')[1:], 
+    x=pd.date_range(df['Star Year'].iloc[-1], periods=prediction_length+1, freq='M')[1:], 
     y=high,
     fill='tonexty',
     mode='lines',
